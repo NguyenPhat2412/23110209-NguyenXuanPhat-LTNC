@@ -21,20 +21,27 @@ namespace GarageManagement
 
         public RepairOrderForm()
         {
-            InitializeComponent();
+            try
+            {
+                InitializeComponent();
 
-            var context = new GarageContext();
+                var context = new GarageContext();
 
-            var customerRepo = new CustomerRepository(context);
-            var carRepo = new CarRepository(context);
-            var partRepo = new PartRepository(context);
-            var repairOrderRepo = new RepairOrderRepository(context);
+                var customerRepo = new CustomerRepository(context);
+                var carRepo = new CarRepository(context);
+                var partRepo = new PartRepository(context);
+                var repairOrderRepo = new RepairOrderRepository(context);
 
-            var unitOfWork = new UnitOfWork(context, customerRepo, carRepo, partRepo, repairOrderRepo);
+                var unitOfWork = new UnitOfWork(context, customerRepo, carRepo, partRepo, repairOrderRepo);
 
-            _repairService = new RepairService(context);
-            _carService = new CarService(unitOfWork);
-            _partService = new PartService(unitOfWork);
+                _repairService = new RepairService(context);
+                _carService = new CarService(unitOfWork);
+                _partService = new PartService(unitOfWork);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi khởi tạo form phiếu sửa chữa: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private async void RepairOrderForm_Load(object sender, EventArgs e)
@@ -176,57 +183,65 @@ namespace GarageManagement
 
         private void dgvDetails_CellValueChanged(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex < 0) return;
-
-            var row = dgvDetails.Rows[e.RowIndex];
-            if (row.IsNewRow) return;
-
-            var colName = dgvDetails.Columns[e.ColumnIndex].Name;
-
-            if (colName == "PartId")
+            try
             {
-                ApplyPartToRow(row);
+                if (e.RowIndex < 0) return;
 
-                // Validate part trùng
-                if (!ValidateNoDuplicateParts(row, out var dupMsg))
+                var row = dgvDetails.Rows[e.RowIndex];
+                if (row.IsNewRow) return;
+
+                var colName = dgvDetails.Columns[e.ColumnIndex].Name;
+
+                if (colName == "PartId")
                 {
-                    MessageBox.Show(dupMsg);
-                    row.Cells["PartId"].Value = null;
-                    row.Cells["UnitPrice"].Value = 0m;
-                    row.Cells["LineTotal"].Value = 0m;
+                    ApplyPartToRow(row);
+
+                    // Validate part trùng
+                    if (!ValidateNoDuplicateParts(row, out var dupMsg))
+                    {
+                        MessageBox.Show(dupMsg);
+                        row.Cells["PartId"].Value = null;
+                        row.Cells["UnitPrice"].Value = 0m;
+                        row.Cells["LineTotal"].Value = 0m;
+                        RecalcTotal();
+                        return;
+                    }
+
+                    RecalcRow(row);
+
+                    // Validate tồn kho
+                    if (!ValidateRowStock(row, out var stockMsg))
+                    {
+                        MessageBox.Show(stockMsg);
+                        row.Cells["Quantity"].Value = 1;
+                        RecalcRow(row);
+                    }
+
                     RecalcTotal();
                     return;
                 }
 
-                RecalcRow(row);
-
-                // Validate tồn kho
-                if (!ValidateRowStock(row, out var stockMsg))
+                if (colName == "Quantity" || colName == "LaborCost")
                 {
-                    MessageBox.Show(stockMsg);
-                    row.Cells["Quantity"].Value = 1;
-                    RecalcRow(row);
-                }
+                    // Validate số lượng/tiền công trước
+                    NormalizeRowValues(row);
 
-                RecalcTotal();
-                return;
+                    RecalcRow(row);
+
+                    if (!ValidateRowStock(row, out var stockMsg))
+                    {
+                        MessageBox.Show(stockMsg);
+                        row.Cells["Quantity"].Value = 1;
+                        RecalcRow(row);
+                    }
+
+                    RecalcTotal();
+                }
             }
-
-            if (colName == "Quantity" || colName == "LaborCost")
+            catch (Exception ex)
             {
-                // Validate số lượng/tiền công trước
-                NormalizeRowValues(row);
+                MessageBox.Show("Lỗi xử lý dữ liệu dòng chi tiết: " + ex.Message);
 
-                RecalcRow(row);
-
-                if (!ValidateRowStock(row, out var stockMsg))
-                {
-                    MessageBox.Show(stockMsg);
-                    row.Cells["Quantity"].Value = 1;
-                    RecalcRow(row);
-                }
-
-                RecalcTotal();
             }
         }
 

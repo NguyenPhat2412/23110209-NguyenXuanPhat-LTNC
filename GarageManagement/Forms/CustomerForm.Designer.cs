@@ -31,6 +31,7 @@ namespace GarageManagement
         private Button btnAdd;
         private Button btnUpdate;
         private Button btnDelete;
+        private Button btnReset;
 
         protected override void Dispose(bool disposing)
         {
@@ -67,6 +68,7 @@ namespace GarageManagement
             this.btnAdd = new Button();
             this.btnUpdate = new Button();
             this.btnDelete = new Button();
+            this.btnReset = new Button();
 
             ((System.ComponentModel.ISupportInitialize)(this.dgvCustomers)).BeginInit();
             this.SuspendLayout();
@@ -224,7 +226,7 @@ namespace GarageManagement
             this.txtAddress.ScrollBars = ScrollBars.Vertical;
 
             // Buttons style
-            Button[] btns = new[] { this.btnAdd, this.btnUpdate, this.btnDelete };
+            Button[] btns = new[] { this.btnAdd, this.btnUpdate, this.btnDelete, this.btnReset };
             foreach (var b in btns)
             {
                 b.FlatStyle = FlatStyle.Flat;
@@ -238,27 +240,38 @@ namespace GarageManagement
             this.btnAdd.Text = "Thêm";
             this.btnUpdate.Text = "Sửa";
             this.btnDelete.Text = "Xóa";
+            this.btnReset.Text = "Làm mới";
 
             this.btnAdd.BackColor = Color.FromArgb(76, 175, 80);
             this.btnUpdate.BackColor = Color.FromArgb(255, 152, 0);
             this.btnDelete.BackColor = Color.FromArgb(244, 67, 54);
+            this.btnReset.BackColor = Color.FromArgb(33, 150, 243);
 
             this.btnAdd.Location = new Point(16, 310);
             this.btnUpdate.Location = new Point(150, 310);
             this.btnDelete.Location = new Point(284, 310);
+            this.btnReset.Location = new Point(16, 370);
 
             this.btnAdd.Click += new System.EventHandler(this.btnAdd_Click);
             this.btnUpdate.Click += new System.EventHandler(this.btnUpdate_Click);
             this.btnDelete.Click += new System.EventHandler(this.btnDelete_Click);
+            this.btnReset.Click += new System.EventHandler(this.btnReset_Click);
 
             this.btnAdd.MouseEnter += (s, e) => this.btnAdd.BackColor = Color.FromArgb(67, 160, 71);
             this.btnAdd.MouseLeave += (s, e) => this.btnAdd.BackColor = Color.FromArgb(76, 175, 80);
+            //this.btnAdd.MouseHover += (s, e) => this.btnAdd.BackColor = Color.FromArgb(67, 160, 71);
 
             this.btnUpdate.MouseEnter += (s, e) => this.btnUpdate.BackColor = Color.FromArgb(251, 140, 0);
             this.btnUpdate.MouseLeave += (s, e) => this.btnUpdate.BackColor = Color.FromArgb(255, 152, 0);
+            //this.btnDelete.MouseHover += (s, e) => this.btnUpdate.BackColor = Color.FromArgb(251, 140, 0);
 
             this.btnDelete.MouseEnter += (s, e) => this.btnDelete.BackColor = Color.FromArgb(229, 57, 53);
             this.btnDelete.MouseLeave += (s, e) => this.btnDelete.BackColor = Color.FromArgb(244, 67, 54);
+            //this.btnDelete.MouseHover += (s, e) => this.btnDelete.BackColor = Color.FromArgb(229, 57, 53);
+
+            this.btnReset.MouseEnter += (s, e) => this.btnReset.BackColor = Color.FromArgb(30, 136, 229);
+            this.btnReset.MouseLeave += (s, e) => this.btnReset.BackColor = Color.FromArgb(33, 150, 243);
+            //this.btnReset.MouseHover += (s, e) => this.btnReset.BackColor = Color.FromArgb(30, 136, 229);
 
             card.Controls.Add(this.lblFullName);
             card.Controls.Add(this.txtFullName);
@@ -272,6 +285,7 @@ namespace GarageManagement
             card.Controls.Add(this.btnAdd);
             card.Controls.Add(this.btnUpdate);
             card.Controls.Add(this.btnDelete);
+            card.Controls.Add(this.btnReset);
 
             this.pnlRight.Controls.Add(card);
 

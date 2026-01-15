@@ -19,6 +19,7 @@ namespace GarageManagement
 
         public CustomerForm()
         {
+            try { 
             InitializeComponent();
 
             var context = new GarageContext();
@@ -30,16 +31,27 @@ namespace GarageManagement
             var unitOfWork = new UnitOfWork(context, customerRepo, carRepo, partRepo, repairOrderRepo);
 
             _customerService = new CustomerService(unitOfWork);
-        }
+                            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi khởi tạo form khách hàng: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+            }
+        }   
 
         private async void CustomerForm_Load(object sender, EventArgs e)
         {
+            try { 
             InitCustomerGrid();
             dgvCustomers.DataBindingComplete -= dgvCustomers_DataBindingComplete;
             dgvCustomers.DataBindingComplete += dgvCustomers_DataBindingComplete;
 
             await LoadDataAsync();
             ClearInput();
+            } catch(Exception ex)
+            {
+                MessageBox.Show("Lỗi tải dữ liệu khách hàng: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void dgvCustomers_DataBindingComplete(object? sender, DataGridViewBindingCompleteEventArgs e)
@@ -233,6 +245,12 @@ namespace GarageManagement
             }
         }
 
+        // Reset 
+        public void btnReset_Click(object sender, EventArgs e)
+        {
+            ClearInput();
+            ClearGridSelection();
+        }
 
         private void dgvCustomers_SelectionChanged(object sender, EventArgs e)
         {
@@ -246,18 +264,26 @@ namespace GarageManagement
 
         private void txtSearch_TextChanged(object sender, EventArgs e)
         {
-            var keyword = txtSearch.Text.Trim();
-            if (string.IsNullOrEmpty(keyword))
+            try
             {
+                var keyword = txtSearch.Text.Trim();
+                if (string.IsNullOrEmpty(keyword))
+                {
+                    RefreshGrid();
+                    return;
+                }
+
+                var filtered = _currentData
+                    .Where(x => (x.FullName ?? "").Contains(keyword, StringComparison.OrdinalIgnoreCase));
                 RefreshGrid();
+                dgvCustomers.DataSource = null;
+                dgvCustomers.DataSource = filtered.ToList();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi tìm kiếm: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-
-            var filtered = _currentData
-                .Where(x => (x.FullName ?? "").Contains(keyword, StringComparison.OrdinalIgnoreCase));
-            RefreshGrid();
-            dgvCustomers.DataSource = null;
-            dgvCustomers.DataSource = filtered.ToList();
         }
     }
 }

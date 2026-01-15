@@ -18,11 +18,17 @@ namespace GarageManagement.Forms
 
         public PartForm()
         {
+            try { 
             InitializeComponent();
 
             var context = new GarageContext();
             var uow = new UnitOfWork(context);
             _partService = new PartService(uow);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi khởi tạo form phụ tùng: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private async void PartForm_Load(object sender, EventArgs e)
@@ -174,53 +180,76 @@ namespace GarageManagement.Forms
 
         private async void btnDelete_Click(object sender, EventArgs e)
         {
-            if (dgvParts.CurrentRow == null) return;
+            try
+            {
+                if (dgvParts.CurrentRow == null) return;
 
-            var id = (int)dgvParts.CurrentRow.Cells["PartId"].Value;
+                var id = (int)dgvParts.CurrentRow.Cells["PartId"].Value;
 
-            var ok = MessageBox.Show(
-                "Bạn có chắc chắn muốn xóa phụ tùng này không?",
-                "Xác nhận",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Warning);
+                var ok = MessageBox.Show(
+                    "Bạn có chắc chắn muốn xóa phụ tùng này không?",
+                    "Xác nhận",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning);
 
-            if (ok != DialogResult.Yes) return;
+                if (ok != DialogResult.Yes) return;
 
-            await _partService.DeleteAsync(id);
+                await _partService.DeleteAsync(id);
 
-            var item = _currentData.FirstOrDefault(x => x.PartId == id);
-            if (item != null)
-                _currentData.Remove(item);
+                var item = _currentData.FirstOrDefault(x => x.PartId == id);
+                if (item != null)
+                    _currentData.Remove(item);
 
-            RefreshGrid(_currentData);
-            ClearInputs();
+                RefreshGrid(_currentData);
+                ClearInputs();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Lỗi xóa phụ tùng: ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+            }
         }
 
 
         private void dgvParts_SelectionChanged(object sender, EventArgs e)
         {
-            if (dgvParts.CurrentRow == null) return;
-            if (dgvParts.SelectedRows.Count == 0) return;
+            try
+            {
+                if (dgvParts.CurrentRow == null) return;
+                if (dgvParts.SelectedRows.Count == 0) return;
 
-            txtPartName.Text = dgvParts.CurrentRow.Cells["PartName"].Value?.ToString();
-            txtUnitPrice.Text = dgvParts.CurrentRow.Cells["UnitPrice"].Value?.ToString();
-            txtStock.Text = dgvParts.CurrentRow.Cells["StockQuantity"].Value?.ToString();
+                txtPartName.Text = dgvParts.CurrentRow.Cells["PartName"].Value?.ToString();
+                txtUnitPrice.Text = dgvParts.CurrentRow.Cells["UnitPrice"].Value?.ToString();
+                txtStock.Text = dgvParts.CurrentRow.Cells["StockQuantity"].Value?.ToString();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi hiển thị thông tin phụ tùng: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void txtSearch_TextChanged(object sender, EventArgs e)
         {
-            var keyword = txtSearch.Text.Trim();
-            if (string.IsNullOrEmpty(keyword))
+            try
             {
-                RefreshGrid(_currentData);
-                return;
+                var keyword = txtSearch.Text.Trim();
+                if (string.IsNullOrEmpty(keyword))
+                {
+                    RefreshGrid(_currentData);
+                    return;
+                }
+
+                var filtered = _currentData.Where(x =>
+                    (x.PartName ?? "").Contains(keyword, StringComparison.OrdinalIgnoreCase));
+
+
+                RefreshGrid(filtered);
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi tìm kiếm phụ tùng: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
-            var filtered = _currentData.Where(x =>
-                (x.PartName ?? "" ) .Contains(keyword, StringComparison.OrdinalIgnoreCase));
-
-
-            RefreshGrid(filtered);
+            }
         }
     }
 }

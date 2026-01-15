@@ -11,54 +11,90 @@ namespace GarageManagement
     {
         private readonly CarService _carService;
         private readonly CustomerService _customerService;
-        private List<CarDto> _currentData;
+        private List<CarDto> _currentData = new();
 
         public CarForm()
         {
             InitializeComponent();
 
-            var context = new GarageContext();
+            try
+            {
+                var context = new GarageContext();
+                var customerRepo = new CustomerRepository(context);
+                var carRepo = new CarRepository(context);
+                var partRepo = new PartRepository(context);
+                var repairOrderRepo = new RepairOrderRepository(context);
+                var unitOfWork = new UnitOfWork(context, customerRepo, carRepo, partRepo, repairOrderRepo);
 
-            var customerRepo = new CustomerRepository(context);
-            var carRepo = new CarRepository(context);
-            var partRepo = new PartRepository(context);
-            var repairOrderRepo = new RepairOrderRepository(context);
-            var unitOfWork = new UnitOfWork(context, customerRepo, carRepo, partRepo, repairOrderRepo);
-
-            _customerService = new CustomerService(unitOfWork);
-            _carService = new CarService(unitOfWork);
+                _customerService = new CustomerService(unitOfWork);
+                _carService = new CarService(unitOfWork);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi khởi tạo kết nối cơ sở dữ liệu: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private async void CarForm_Load(object sender, EventArgs e)
         {
-            InitCarGrid();
-            dgvCars.DataBindingComplete -= dgvCars_DataBindingComplete;
-            dgvCars.DataBindingComplete += dgvCars_DataBindingComplete;
-            await LoadCustomersAsync();
-            await LoadDataAsync();
-            ClearInput();
+            try
+            {
+                InitCarGrid();
+                dgvCars.DataBindingComplete -= dgvCars_DataBindingComplete;
+                dgvCars.DataBindingComplete += dgvCars_DataBindingComplete;
+                await LoadCustomersAsync();
+                await LoadDataAsync();
+                ClearInput();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi khởi tạo dữ liệu: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void RefreshGrid()
         {
+            try { 
             dgvCars.DataSource = null;
             dgvCars.DataSource = _currentData;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi hiển thị dữ liệu: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private async Task LoadCustomersAsync()
         {
-            var customers = await _customerService.GetAllAsync();
-            var list = customers.ToList();
-            cmbCustomer.DisplayMember = "FullName";
-            cmbCustomer.ValueMember = "CustomerId";
-            cmbCustomer.DataSource = list;
+            try
+            {
+                var customers = await _customerService.GetAllAsync();
+                var list = customers.ToList();
+                cmbCustomer.DisplayMember = "FullName";
+                cmbCustomer.ValueMember = "CustomerId";
+                cmbCustomer.DataSource = list;
+                cmbCustomer.SelectedIndex = -1;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi tải danh sách khách hàng: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+            }
         }
+
 
         private async Task LoadDataAsync()
         {
-            var data = await _carService.GetAllAsync(); 
-            _currentData = data.ToList(); // Dữ liệu đã nằm trên RAM
-            RefreshGrid();
+            try
+            {
+                var data = await _carService.GetAllAsync();
+                _currentData = data.ToList(); // Dữ liệu đã nằm trên RAM
+                RefreshGrid();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi tải danh sách xe: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void ClearInput()
@@ -67,6 +103,8 @@ namespace GarageManagement
             txtBrand.Text = "";
             txtModel.Text = "";
             txtYear.Text = "";
+            cmbCustomer.SelectedIndex = -1;
+            dgvCars.ClearSelection();
         }
 
         private void dgvCars_DataBindingComplete(object? sender, DataGridViewBindingCompleteEventArgs e)
@@ -204,6 +242,7 @@ namespace GarageManagement
         }
         private async void btnDelete_Click(object sender, EventArgs e)
         {
+            try { 
             if (dgvCars.CurrentRow == null) return;
 
             var id = (int)dgvCars.CurrentRow.Cells["CarId"].Value;
@@ -222,10 +261,16 @@ namespace GarageManagement
             if (item != null) _currentData.Remove(item);
 
             RefreshGrid();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi xóa xe: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void dgvCars_SelectionChanged(object sender, EventArgs e)
         {
+            try { 
             if (dgvCars.CurrentRow == null) return;
 
             txtLicensePlate.Text = dgvCars.CurrentRow.Cells["LicensePlate"].Value?.ToString();
@@ -238,23 +283,35 @@ namespace GarageManagement
             {
                 cmbCustomer.SelectedValue = (int)customerIdObj;
             }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi hiển thị thông tin xe: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void txtSearch_TextChanged(object sender, EventArgs e)
         {
-            var keyword = txtSearch.Text.Trim();
-            if (string.IsNullOrEmpty(keyword))
+            try
             {
-                RefreshGrid();
-                return;
-            }
+                var keyword = txtSearch.Text.Trim();
+                if (string.IsNullOrEmpty(keyword))
+                {
+                    RefreshGrid();
+                    return;
+                }
 
-            var filtered = _currentData.Where(x =>
-                   (x.LicensePlate ?? "").Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
-                   (x.Brand ?? "").Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
-                   (x.Model ?? "").Contains(keyword, StringComparison.OrdinalIgnoreCase)
-);
-            RefreshGrid(); // LinQ to Objects (client-side) 
+                var filtered = _currentData.Where(x =>
+                       (x.LicensePlate ?? "").Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
+                       (x.Brand ?? "").Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
+                       (x.Model ?? "").Contains(keyword, StringComparison.OrdinalIgnoreCase)
+    );
+                RefreshGrid(); // LinQ to Objects (client-side) 
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi tìm kiếm xe: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
     }
 }
