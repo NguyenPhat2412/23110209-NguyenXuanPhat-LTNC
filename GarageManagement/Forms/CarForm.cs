@@ -268,6 +268,19 @@ namespace GarageManagement
             }
         }
 
+        public async void btnReset_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                await LoadDataAsync();
+                ClearInput();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi làm mới dữ liệu: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }   
+
         private void dgvCars_SelectionChanged(object sender, EventArgs e)
         {
             try { 
